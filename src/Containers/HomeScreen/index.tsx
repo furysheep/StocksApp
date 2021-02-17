@@ -8,6 +8,7 @@ import {
   FlatList,
   ListRenderItemInfo,
   TextInput,
+  RefreshControl,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {getMostActiveStocks, getSearchKeywords} from '../../Services';
@@ -43,13 +44,17 @@ export default function HomeScreen({navigation}: Props) {
   const [searchResults, setSearchResults] = React.useState(
     Array<SearchResult>(),
   );
+  const [refreshing, setRefreshing] = React.useState(false);
+  const getData = async () => {
+    setRefreshing(true);
+    const result = await getMostActiveStocks();
+    if (result) {
+      setData(result.map((s: any) => s as StockData));
+    }
+    setRefreshing(false);
+  };
   React.useEffect(() => {
-    (async function getData() {
-      const result = await getMostActiveStocks();
-      if (result) {
-        setData(result.map((s: any) => s as StockData));
-      }
-    })();
+    getData();
   }, []);
   const renderItem = ({item}: ListRenderItemInfo<StockData>) => (
     <TouchableOpacity
@@ -126,6 +131,9 @@ export default function HomeScreen({navigation}: Props) {
           keyExtractor={(item) => item.symbol}
           ItemSeparatorComponent={() => <Separator />}
           extraScrollHeight={-80}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={getData} />
+          }
         />
       )}
     </SafeAreaView>
